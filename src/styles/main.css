@@ -1,0 +1,23 @@
+:root {
+  --primary-blue: #3b82f6;
+  --bg-dark: #020617;
+  --bg-gradient: linear-gradient(180deg, #000033 0%, #000000 100%);
+  --glass: rgba(255, 255, 255, 0.03);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --text-main: #f8fafc;
+}
+
+body {
+  margin: 0;
+  background: var(--bg-gradient);
+  color: var(--text-main);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden; 
+}
+
+
+.leaflet-container {
+  filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+  border: 1px solid var(--glass-border);
+  box-shadow: 0 0 20px rgba(59, 130, 246, 0.2);
+}
