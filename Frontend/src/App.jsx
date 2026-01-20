@@ -1,10 +1,28 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
 import "./styles/main.css";
 import "./styles/Dashboard.css";
 import FileUpload from "./components/FileUpload";
 import MapView from "./components/MapView";
 
 function App() {
+
+  const [res, setRes] = useState("");
+  //Backend Connection
+  useEffect(() => {
+  const fetchData = async () => {
+    try {
+      const res = await fetch("http://localhost:5000/api/hello");
+      const data = await res.json();
+      setRes(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  fetchData();
+}, []);
+
+
   const [testCase, setTestCase] = useState({
     employees: [],
     vehicles: [],
