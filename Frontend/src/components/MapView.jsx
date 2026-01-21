@@ -3,9 +3,10 @@ import { MapContainer, TileLayer, Marker, Popup, Polyline } from 'react-leaflet'
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 
-
+// Fix for missing default Leaflet markers in React
 import markerIcon from 'leaflet/dist/images/marker-icon.png';
 import markerShadow from 'leaflet/dist/images/marker-shadow.png';
+
 let DefaultIcon = L.icon({
     iconUrl: markerIcon,
     shadowUrl: markerShadow,
@@ -14,49 +15,66 @@ let DefaultIcon = L.icon({
 });
 L.Marker.prototype.options.icon = DefaultIcon;
 
-function MapView({ employees, isOptimized }) {
-  const defaultCenter = [12.9352, 77.6245];
-
-  // For the demo, route connecting the first two employees to a hub
-  const sampleRoute = employees.length >= 2 ? [
-    [employees[0].pickup_lat, employees[0].pickup_lng],
-    [employees[1].pickup_lat, employees[1].pickup_lng],
-    [12.9716, 77.5946] 
-  ] : [];
+function MapView({ routes, isOptimized }) {
+  // Center on Bangalore (or adjust to your city)
+  const defaultCenter = [12.9716, 77.5946];
 
   return (
-    <MapContainer center={defaultCenter} zoom={12} className="leaflet-container" style={{ height: '100%', width: '100%' }}>
+    <MapContainer 
+      center={defaultCenter} 
+      zoom={12} 
+      className="leaflet-container" 
+      style={{ height: '100%', width: '100%', background: '#0f172a' }}
+    >
+      {/* Dark Mode Map Tiles */}
       <TileLayer
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         className="map-tiles"
       />
 
-      {/* INITIAL STATE: Plotted as soon as Excel is uploaded */}
-      {employees.map((emp, index) => (
-        <Marker 
-          key={index} 
-          position={[emp.pickup_lat, emp.pickup_lng]}
-        >
-          <Popup>
-            <div className="popup-content">
-              <strong>Employee ID:</strong> {emp.employee_id} <br/>
-              <strong>Priority:</strong> {emp.priority} <br/>
-              <strong>Vehicle Pref:</strong> {emp.vehicle_preference}
-            </div>
-          </Popup>
-        </Marker>
+      {/* RENDER OPTIMIZED ROUTES */}
+      {isOptimized && routes && routes.map((route, idx) => (
+        <React.Fragment key={route.id || idx}>
+          {/* 1. The Route Path */}
+          <Polyline 
+            positions={route.path} 
+            pathOptions={{ 
+              color: route.color, 
+              weight: 4, 
+              opacity: 0.8,
+              dashArray: '10, 10' // Makes it look technical/planned
+            }}
+          />
+          
+          {/* 2. Start Marker (Vehicle Origin) */}
+          {route.path.length > 0 && (
+             <Marker position={route.path[0]}>
+               <Popup>
+                 <strong>{route.id}</strong><br/>
+                 Start Location
+               </Popup>
+             </Marker>
+          )}
+
+          {/* 3. End Marker (Office/Destination) */}
+          {route.path.length > 0 && (
+             <Marker position={route.path[route.path.length - 1]}>
+               <Popup>
+                 Destination<br/>
+                 (Route End)
+               </Popup>
+             </Marker>
+          )}
+        </React.Fragment>
       ))}
 
-      {/* OPTIMIZED STATE: Routes overlaid after clicking Run */}
-      {isOptimized && sampleRoute.length > 0 && (
-        <Polyline 
-          positions={sampleRoute} 
-          color="#3b82f6" 
-          weight={4} 
-          opacity={0.8}
-          dashArray="10, 15" 
-        />
+      {/* Fallback if no routes yet (show center marker) */}
+      {!isOptimized && (
+        <Marker position={defaultCenter}>
+          <Popup>Velora HQ Area</Popup>
+        </Marker>
       )}
+
     </MapContainer>
   );
 }

@@ -1,4 +1,6 @@
-import { Distance } from './distanceCalculator';
+// FIX: Import the default object, then extract Distance from it
+import distanceUtils from './distanceCalculator.js';
+const { Distance } = distanceUtils;
 
 // Generate all permutations (for small arrays only!)
 function permutations(arr) {
@@ -27,39 +29,47 @@ function routeDistance(points) {
 
 // Find best route for a vehicle
 function findBestRoute(vehicleStart, employees) {
-  // Build list of pickup points
+  // 1. Map pickups using CORRECT CSV headers
   const pickups = employees.map(e => ({
     lat: e.pickup_lat,
     lng: e.pickup_lng,
-    user_id: e.user_id,
+    user_id: e.employee_id, 
     type: 'pickup'
   }));
 
+  // 2. Map drops using CORRECT CSV headers
   const drops = employees.map(e => ({
-    lat: e.dest_lat,
-    lng: e.dest_lng,
-    user_id: e.user_id,
+    lat: e.drop_lat,       
+    lng: e.drop_lng,       
+    user_id: e.employee_id,
     type: 'drop'
   }));
 
-  // For brute force: if ≤5 employees, try all permutations
-  // Otherwise use nearest neighbor
+  // SAFETY CHECK: If employees <= 5, use Brute Force Permutation
   if (employees.length <= 5) {
     const allPerms = permutations(pickups);
     let bestRoute = null;
     let bestDist = Infinity;
 
     for (const perm of allPerms) {
+      // Logic: Start -> Pick everyone up (permuted) -> Drop everyone off (in order)
       const route = [vehicleStart, ...perm, ...drops];
       const dist = routeDistance(route);
-      if (dist < bestDist) {
+      
+      // Check for isNaN to prevent failures
+      if (!isNaN(dist) && dist < bestDist) {
         bestDist = dist;
         bestRoute = route;
       }
     }
-    return { route: bestRoute, distance: bestDist };
+    
+    // Fallback if math fails (NaN protection)
+    return { 
+        route: bestRoute || [vehicleStart, ...pickups, ...drops], 
+        distance: bestDist === Infinity ? 0 : bestDist 
+    };
   } else {
-    // Nearest neighbor fallback
+    // Fallback for large groups: Nearest Neighbor
     return nearestNeighborRoute(vehicleStart, [...pickups, ...drops]);
   }
 }
@@ -88,4 +98,5 @@ function nearestNeighborRoute(start, points) {
   return { route, distance: routeDistance(route) };
 }
 
+// Export as an object so the Controller can use routingUtils.findBestRoute
 export default { findBestRoute, routeDistance };

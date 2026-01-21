@@ -1,181 +1,85 @@
-
-
+/* --- LAYOUT GRID --- */
 .dashboard-container {
   display: grid;
-  grid-template-columns: 320px 1fr auto;
-  grid-template-rows: 80px 1fr;
+  grid-template-columns: 320px 1fr auto; /* Left Sidebar, Map, Right Sidebar */
+  grid-template-rows: 80px 1fr; /* Header, Content */
   height: 100vh;
-  background: var(--bg-gradient);
+  background: linear-gradient(180deg, #000033 0%, #000000 100%);
   color: white;
   overflow: hidden;
 }
 
+/* --- HEADER --- */
 .header {
   grid-column: 1 / -1; 
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 0 30px;
-  background: rgba(2, 6, 23, 0.8);
-  border-bottom: 1px solid var(--glass-border);
-}
-
-
-.assignments-sidebar {
-  width: 320px;
   background: rgba(2, 6, 23, 0.9);
-  border-left: 1px solid var(--glass-border);
-  padding: 20px;
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-  overflow-y: auto;
-  animation: slideIn 0.4s ease-out;
-  
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  z-index: 10;
 }
 
-.assignmnet-slidebar.h3{
-    font-size: 20px;
-}
-@keyframes slideIn {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.vehicle-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  padding: 15px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-}
-
-.header-results {
-  display: flex;
-  gap: 20px;
-  animation: fadeIn 0.5s ease;
-}
-
-.header-stat {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid var(--primary-blue);
-  padding: 5px 15px;
-  border-radius: 20px;
-  font-size: 0.9rem;
-}
-
-.savings-text {
-  color: #10b981; 
-  font-weight: bold;
-}
 .header h1 {
   font-size: 1.5rem;
   letter-spacing: 2px;
   text-transform: uppercase;
+  margin: 0;
+}
+.blue-text { color: #3b82f6; }
+
+/* Header Stats Area */
+.header-results {
+  display: flex;
+  gap: 30px;
+  animation: fadeIn 0.5s ease;
 }
 
+.stat-group {
+    display: flex;
+    gap: 15px;
+    align-items: center;
+    border-right: 1px solid rgba(255,255,255,0.1);
+    padding-right: 20px;
+}
+.stat-group:last-child { border-right: none; }
 
+.header-stat {
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid #3b82f6;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  white-space: nowrap;
+}
+
+.savings-text { color: #10b981; font-weight: bold; border-color: #10b981; }
+.highlight-time { border-color: #f59e0b; color: #f59e0b; }
+
+/* --- LEFT SIDEBAR (INPUT) --- */
 .sidebar {
-  background: var(--glass);
+  background: rgba(255, 255, 255, 0.03);
   backdrop-filter: blur(15px);
-  border: 1px solid var(--glass-border);
-  border-radius: 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
   padding: 25px;
   display: flex;
   flex-direction: column;
-  height: 100%;
-  box-sizing: border-box; 
+  gap: 20px;
+  z-index: 5;
 }
-
-.action-area {
-  margin-top: auto; 
-  padding-bottom: 10px;
-}
-
-
-.vehicle-list {
-  position: absolute;
-  right: 20px;
-  top: 200px;
-  width: 260px;
-  max-height: 65vh;
-  overflow-y: auto;
-  background: rgba(2, 6, 23, 0.85);
-  backdrop-filter: blur(12px);
-  padding: 20px;
-  border-radius: 12px;
-  border: 1px solid var(--primary-blue);
-  z-index: 1000;
-}
-
-.vehicle-card {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--glass-border);
-  padding: 15px;
-  margin-bottom: 12px;
-  border-radius: 8px;
-  font-size: 0.8rem;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--glass-border);
-  margin-bottom: 8px;
-  padding-bottom: 5px;
-}
-
-.veh-id {
-  color: var(--primary-blue);
-  font-weight: bold;
-}
-
 
 .input-group {
+    background: rgba(255, 255, 255, 0.02);
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px dashed rgba(255, 255, 255, 0.2);
+}
+
+.input-field-wrapper {
   display: flex;
   flex-direction: column;
   gap: 15px;
-  padding: 20px;
-  background: rgba(255, 255, 255, 0.02);
-  border-radius: 12px;
-  border: 1px dashed var(--glass-border);
-}
-
-.input-group h3 {
-  margin: 0;
-  font-size: 0.9rem;
-  color: var(--primary-blue);
-  text-transform: uppercase;
-  letter-spacing: 1px;
-}
-
-.inner-div {
-  width: 100%;
-  padding: 10px 0;
-  box-sizing: border-box;
-}
-
-
-input[type="file"] {
-  width: 100%; 
-  max-width: 100%;
-  padding: 15px; 
-  background: rgba(59, 130, 246, 0.05);
-  border: 1px solid var(--primary-blue);
-  border-radius: 8px;
-  color: #fff;
-  cursor: pointer;
-  box-sizing: border-box; 
-  font-size: 0.9rem;
-}
-
-.action-area {
-  margin-top: auto; 
-  padding-bottom: 10px;
 }
 
 .optimize-btn {
@@ -190,69 +94,86 @@ input[type="file"] {
   color: white;
   cursor: pointer;
   box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
-  transition: transform 0.2s ease;
+  transition: all 0.2s ease;
+  margin-top: auto;
 }
+.optimize-btn:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5); }
+.optimize-btn:disabled { background: #334155; cursor: not-allowed; box-shadow: none; }
 
-.optimize-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(59, 130, 246, 0.5);
-}
-
-.kpi-card {
-  background: rgba(59, 130, 246, 0.1);
-  border: 1px solid var(--primary-blue);
-  padding: 8px 16px;
-  border-radius: 20px;
-  font-weight: bold;
-}
-
-.nav-link {
-  color: white;
-  text-decoration: none;
-  font-size: 1.5rem;
-  opacity: 0.7;
-  transition: opacity 0.3s;
-}
-.nav-link:hover {
-  opacity: 1;
-  color: var(--primary-blue);
-}
-
-
-.summary-card {
-  position: absolute;
-  bottom: 40px;
-  left: 50%;
-  transform: translateX(-50%);
-  background: rgba(2, 6, 23, 0.9);
-  backdrop-filter: blur(12px);
-  border: 1px solid var(--primary-blue);
-  border-radius: 12px;
-  display: flex;
-  gap: 30px;
-  padding: 20px 40px;
-  z-index: 1000;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-}
-
-.summary-item {
+/* --- RIGHT SIDEBAR (ASSIGNMENTS) --- */
+.assignments-sidebar {
+  width: 340px;
+  background: rgba(2, 6, 23, 0.95);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 20px;
   display: flex;
   flex-direction: column;
+  gap: 15px;
+  overflow-y: auto;
+  animation: slideIn 0.4s ease-out;
+  z-index: 5;
+}
+
+.assignments-sidebar h3 { margin-top: 0; font-size: 1.1rem; color: #94a3b8; }
+
+.vehicle-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 15px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  transition: background 0.2s;
+}
+.vehicle-card:hover { background: rgba(255, 255, 255, 0.06); }
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
   align-items: center;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+}
+.veh-id { color: #fff; font-size: 1rem; font-weight: bold; }
+.capacity-badge { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-size: 0.75rem; color: #94a3b8; }
+.route-name { color: #cbd5e1; margin: 0 0 12px 0; font-size: 0.8rem; font-style: italic; }
+
+/* --- TIMELINE (ITINERARY) STYLES --- */
+.timeline {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding-left: 12px;
+    border-left: 2px solid rgba(255,255,255,0.1);
+    margin-left: 5px;
 }
 
-.summary-item label {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: #888;
-  margin-bottom: 5px;
+.timeline-item {
+    display: flex;
+    gap: 12px;
+    font-size: 0.8rem;
+    position: relative;
+    align-items: flex-start;
 }
 
-.summary-item span {
-  font-size: 1.2rem;
-  font-weight: bold;
+/* The little dot on the timeline */
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -17px;
+    top: 5px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #475569;
+    border: 2px solid #0f172a;
 }
 
-.summary-item.highlight span {
-  color: #10b981; 
-}
+.time { color: #60a5fa; font-family: monospace; min-width: 60px; }
+.stop-name { color: #cbd5e1; line-height: 1.2; }
+.stop-name.pickup { color: #cbd5e1; }
+.stop-name.drop { color: #10b981; font-weight: bold; }
+
+/* Animations */
+@keyframes slideIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
