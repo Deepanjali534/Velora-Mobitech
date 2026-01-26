@@ -1,17 +1,17 @@
-import { parseExcel } from '../utils/excelParser';
-import { assignEmployeesToVehicles } from '../utils/employeeAssignment';
-import { findBestRoute } from '../utils/routing';
-import { Distance } from '../utils/distanceCalculator';
+import excelParser from '../utils/excelParser.js';
+import assignmentUtils from '../utils/employeeAssignment.js';
+import routingUtils from '../utils/routing.js'; 
+import distanceUtils from '../utils/distanceCalculator.js';
 
-const BASELINE_COST_PER_KM = 15; // Market rate (Ola/Uber avg)
+const BASELINE_COST_PER_KM = 15; 
 
 async function runOptimization(demandBuffer, supplyBuffer) {
   // 1. Parse Excel files
-  const employees = parseExcel(demandBuffer);
-  const vehicles = parseExcel(supplyBuffer);
+  const employees = excelParser.parseExcel(demandBuffer);
+  const vehicles = excelParser.parseExcel(supplyBuffer);
 
   // 2. Assign employees to vehicles
-  const assignments = assignEmployeesToVehicles(employees, vehicles);
+  const assignments = assignmentUtils.assignEmployeesToVehicles(employees, vehicles);
 
   // 3. Generate routes for each vehicle
   const vehicleResults = [];
@@ -25,21 +25,27 @@ async function runOptimization(demandBuffer, supplyBuffer) {
       lng: vehicle.current_lng
     };
 
-    const { route, distance } = findBestRoute(vehicleStart, vehicle.assigned);
+    // Calculate best route
+    const { route, distance } = routingUtils.findBestRoute(vehicleStart, vehicle.assigned);
     
-    const cost = distance * vehicle.cost_per_km;
-    const time = (distance / vehicle.avg_speed) * 60; // minutes
+    // FIX: Ensure cost_per_km exists, default to 10 if missing
+    const costRate = vehicle.cost_per_km || 10;
+    const cost = distance * costRate;
+
+    // CRITICAL FIX: Use 'avg_speed_kmph' (from CSV) instead of 'avg_speed'
+    // Also adding a fallback (|| 30) prevents NaN if data is missing
+    const speed = vehicle.avg_speed_kmph || 30; 
+    const time = (distance / speed) * 60; 
 
     totalDistance += distance;
     totalCost += cost;
     totalTime += time;
 
-    // Build polyline coordinates for frontend
     const polylineCoords = route.map(p => [p.lat, p.lng]);
 
     vehicleResults.push({
       vehicle_id: vehicle.vehicle_id,
-      assigned_users: vehicle.assigned.map(e => e.user_id),
+      assigned_users: vehicle.assigned.map(e => e.employee_id),
       route_nodes: route,
       polyline_coords: polylineCoords,
       total_distance_km: distance.toFixed(2),
@@ -48,33 +54,31 @@ async function runOptimization(demandBuffer, supplyBuffer) {
     });
   }
 
-  // 4. Calculate baseline cost (each employee travels alone)
+  // 4. Calculate baseline cost
   let baselineCost = 0;
   for (const emp of employees) {
-    const directDist = Distance(
+    const directDist = distanceUtils.Distance(
       emp.pickup_lat, emp.pickup_lng,
-      emp.dest_lat, emp.dest_lng
+      emp.drop_lat, emp.drop_lng
     );
     baselineCost += directDist * BASELINE_COST_PER_KM;
   }
 
   // 5. Build response
   const savings = baselineCost - totalCost;
-  const savingsPercent = ((savings / baselineCost) * 100).toFixed(1);
+  const savingsPercent = baselineCost > 0 ? ((savings / baselineCost) * 100).toFixed(1) : "0.0";
 
   return {
     vehicles: vehicleResults,
     metrics: {
       total_distance_km: totalDistance.toFixed(2),
+      total_travel_time_mins: totalTime.toFixed(1),
       total_operational_cost: totalCost.toFixed(2),
       baseline_cost: baselineCost.toFixed(2),
       savings_absolute: savings.toFixed(2),
-      savings_percent: savingsPercent,
-      total_travel_time_mins: totalTime.toFixed(1)
-    },
-    employee_count: employees.length,
-    vehicle_count: assignments.length
+      savings_percent: savingsPercent
+    }
   };
 }
 
-export default { runOptimization };
+export { runOptimization };
