@@ -1,84 +1,86 @@
-import excelParser from '../utils/excelParser.js';
-import assignmentUtils from '../utils/employeeAssignment.js';
-import routingUtils from '../utils/routing.js'; 
-import distanceUtils from '../utils/distanceCalculator.js';
+import { spawn } from 'child_process';
+import path from 'path';
+import { fileURLToPath } from 'url';
+import { parseExcel } from '../utils/excelParser.js';
 
-const BASELINE_COST_PER_KM = 15; 
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-async function runOptimization(demandBuffer, supplyBuffer) {
+async function runCppOptimizer(demandBuffer, supplyBuffer) {
   // 1. Parse Excel files
-  const employees = excelParser.parseExcel(demandBuffer);
-  const vehicles = excelParser.parseExcel(supplyBuffer);
+  const employees = parseExcel(demandBuffer);
+  const vehicles = parseExcel(supplyBuffer);
 
-  // 2. Assign employees to vehicles
-  const assignments = assignmentUtils.assignEmployeesToVehicles(employees, vehicles);
-
-  // 3. Generate routes for each vehicle
-  const vehicleResults = [];
-  let totalDistance = 0;
-  let totalCost = 0;
-  let totalTime = 0;
-
-  for (const vehicle of assignments) {
-    const vehicleStart = {
-      lat: vehicle.current_lat,
-      lng: vehicle.current_lng
-    };
-
-    // Calculate best route
-    const { route, distance } = routingUtils.findBestRoute(vehicleStart, vehicle.assigned);
-    
-    // FIX: Ensure cost_per_km exists, default to 10 if missing
-    const costRate = vehicle.cost_per_km || 10;
-    const cost = distance * costRate;
-
-    // CRITICAL FIX: Use 'avg_speed_kmph' (from CSV) instead of 'avg_speed'
-    // Also adding a fallback (|| 30) prevents NaN if data is missing
-    const speed = vehicle.avg_speed_kmph || 30; 
-    const time = (distance / speed) * 60; 
-
-    totalDistance += distance;
-    totalCost += cost;
-    totalTime += time;
-
-    const polylineCoords = route.map(p => [p.lat, p.lng]);
-
-    vehicleResults.push({
-      vehicle_id: vehicle.vehicle_id,
-      assigned_users: vehicle.assigned.map(e => e.employee_id),
-      route_nodes: route,
-      polyline_coords: polylineCoords,
-      total_distance_km: distance.toFixed(2),
-      cost: cost.toFixed(2),
-      travel_time_mins: time.toFixed(1)
-    });
-  }
-
-  // 4. Calculate baseline cost
-  let baselineCost = 0;
-  for (const emp of employees) {
-    const directDist = distanceUtils.Distance(
-      emp.pickup_lat, emp.pickup_lng,
-      emp.drop_lat, emp.drop_lng
-    );
-    baselineCost += directDist * BASELINE_COST_PER_KM;
-  }
-
-  // 5. Build response
-  const savings = baselineCost - totalCost;
-  const savingsPercent = baselineCost > 0 ? ((savings / baselineCost) * 100).toFixed(1) : "0.0";
-
-  return {
-    vehicles: vehicleResults,
-    metrics: {
-      total_distance_km: totalDistance.toFixed(2),
-      total_travel_time_mins: totalTime.toFixed(1),
-      total_operational_cost: totalCost.toFixed(2),
-      baseline_cost: baselineCost.toFixed(2),
-      savings_absolute: savings.toFixed(2),
-      savings_percent: savingsPercent
-    }
+  // 2. Build input data
+  const inputData = {
+    employees: employees.map(e => ({
+      user_id: e.user_id,
+      priority_level: parseInt(e.priority_level),
+      pickup_lat: parseFloat(e.pickup_lat),
+      pickup_lng: parseFloat(e.pickup_lng),
+      dest_lat: parseFloat(e.dest_lat),
+      dest_lng: parseFloat(e.dest_lng),
+      vehicle_preference: e.vehicle_preference,
+      sharing_pref: e.sharing_pref
+    })),
+    vehicles: vehicles.map(v => ({
+      vehicle_id: v.vehicle_id,
+      capacity: parseInt(v.capacity),
+      cost_per_km: parseFloat(v.cost_per_km),
+      avg_speed: parseFloat(v.avg_speed),
+      current_lat: parseFloat(v.current_lat),
+      current_lng: parseFloat(v.current_lng)
+    })),
+    baseline_rate_per_km: 15.0
   };
+
+  console.log(`📤 Sending ${inputData.employees.length} employees, ${inputData.vehicles.length} vehicles to C++`);
+
+  // 3. C++ executable path
+  const cppPath = path.join(__dirname, '..', 'cpp', 'output', 'vrp_solver.exe');
+  console.log(`🚀 Spawning: ${cppPath}`);
+
+  return new Promise((resolve, reject) => {
+    const cppProcess = spawn(cppPath, [], {
+      stdio: ['pipe', 'pipe', 'pipe'],
+      timeout: 60000,
+      shell: true
+    });
+
+    // Send input
+    cppProcess.stdin.write(JSON.stringify(inputData));
+    cppProcess.stdin.end();
+
+    let stdoutData = '';
+    let stderrData = '';
+
+    cppProcess.stdout.on('data', (chunk) => {
+      stdoutData += chunk.toString();
+    });
+
+    cppProcess.stderr.on('data', (chunk) => {
+      stderrData += chunk.toString();
+    });
+
+    cppProcess.on('close', (code) => {
+      console.log(`✅ C++ exited (code: ${code})`);
+      
+      if (code === 0 && stdoutData.trim()) {
+        try {
+          const solution = JSON.parse(stdoutData);
+          resolve(solution);
+        } catch (parseErr) {
+          reject(new Error(`JSON parse failed: ${parseErr.message}`));
+        }
+      } else {
+        reject(new Error(`C++ failed (code ${code}):\n${stderrData}`));
+      }
+    });
+
+    cppProcess.on('error', (err) => {
+      reject(new Error(`Spawn failed: ${err.message}`));
+    });
+  });
 }
 
-export { runOptimization };
+export default runCppOptimizer;
