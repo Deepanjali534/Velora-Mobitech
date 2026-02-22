@@ -9,14 +9,9 @@ const router = Router();
 
 const upload = multer({ dest: "uploads/" });
 
-const uploadFields = upload.fields([
-  { name: "demandFile", maxCount: 1 },
-  { name: "supplyFile", maxCount: 1 },
-]);
-
 router.post(
   "/optimise",
-  uploadFields,
+  upload.single("file"),
 
   async (req, res) => {
     try {

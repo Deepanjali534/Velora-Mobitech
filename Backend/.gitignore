@@ -1,1 +1,14 @@
-node_modules
+# Dependency directories
+node_modules/
+
+# Local uploads/temp files
+uploads/*
+!uploads/.gitkeep
+
+# Environment variables
+.env
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*

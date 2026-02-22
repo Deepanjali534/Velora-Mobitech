@@ -3,9 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\" \"npm run python\"",
     "backend": "cd backend && npm run dev",
     "frontend": "cd frontend && npm run dev",
+    "puthon": "cd python && uvicorn optimisation_api:app --reload",
+    "install-all": "npm install && cd frontend && npm install && cd ../backend && npm install",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
